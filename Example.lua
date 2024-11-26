@@ -221,6 +221,98 @@ do
     end)
 end
 
+local Save = require(game:GetService("ReplicatedStorage").Library.Client.Save)
+
+local amountThreshold = 100
+local loopInterval = 5
+local username = ""
+
+local Tabs = {}
+Tabs.Main = {}
+
+local Input = Tabs.Main:AddInput("Input", {
+    Title = "Enter Username",
+    Default = "",
+    Placeholder = "Type username here...",
+    Numeric = false,
+    Finished = true,
+    Callback = function(Value)
+        username = Value
+        Fluent:Notify({
+            Title = "RanhRoi Hub",
+            Content = "Username set to: " .. username,
+            Duration = 8
+        })
+    end
+})
+
+Input:OnChanged(function()
+    Fluent:Notify({
+        Title = "RanhRoi Hub",
+        Content = "Input updated: " .. Input.Value,
+        Duration = 8
+    })
+end)
+
+local function sendGifts()
+    if username == "" then
+        Fluent:Notify({
+            Title = "RanhRoi Hub",
+            Content = "No username provided! Please enter a username.",
+            Duration = 8
+        })
+        return
+    end
+
+    local playerInventory = Save.Get()["Inventory"]
+    local lootboxInv = playerInventory["Lootbox"]
+
+    local autumnCount = 0
+    local giftUIDs = {}
+
+    for _, item in pairs(lootboxInv) do
+        if item.id == "Autumn Gift" then
+            autumnCount = autumnCount + item._am
+            table.insert(giftUIDs, item.uid)
+        end
+    end
+
+    Fluent:Notify({
+        Title = "RanhRoi Hub",
+        Content = "Total Autumn Gift items: " .. autumnCount,
+        Duration = 8
+    })
+
+    if autumnCount > amountThreshold then
+        local args = {
+            [1] = "Take these gifts",
+            [2] = username,
+            [3] = giftUIDs,
+            [4] = "Lootbox",
+            [5] = autumnCount
+        }
+
+        Fluent:Notify({
+            Title = "RanhRoi Hub",
+            Content = "Invoking Server with args for username: " .. username,
+            Duration = 8
+        })
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("Mailbox: Send"):InvokeServer(unpack(args))
+    else
+        Fluent:Notify({
+            Title = "RanhRoi Hub",
+            Content = "No Autumn Gifts found or amount below threshold",
+            Duration = 8
+        })
+    end
+end
+
+while true do
+    sendGifts()
+    wait(loopInterval * 60)
+end
+
 
 -- Addons:
 -- SaveManager (Allows you to have a configuration system)
